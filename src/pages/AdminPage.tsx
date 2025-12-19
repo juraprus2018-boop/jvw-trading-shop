@@ -1,7 +1,11 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { AdminProducts } from '@/components/admin/AdminProducts';
+import { AdminOrders } from '@/components/admin/AdminOrders';
+import { AdminPurchaseRequests } from '@/components/admin/AdminPurchaseRequests';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -16,11 +20,9 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container py-16 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </Layout>
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
@@ -29,13 +31,13 @@ export default function AdminPage() {
   }
 
   return (
-    <Layout>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          Admin dashboard wordt binnenkort uitgebreid. Log in als admin om toegang te krijgen tot productbeheer, bestellingen en inkoop aanvragen.
-        </p>
-      </div>
-    </Layout>
+    <AdminLayout>
+      <Routes>
+        <Route index element={<AdminDashboard />} />
+        <Route path="producten" element={<AdminProducts />} />
+        <Route path="bestellingen" element={<AdminOrders />} />
+        <Route path="inkoop" element={<AdminPurchaseRequests />} />
+      </Routes>
+    </AdminLayout>
   );
 }
