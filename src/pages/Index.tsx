@@ -35,13 +35,13 @@ export default function Index() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative industrial-gradient text-secondary-foreground">
+      <section className="relative industrial-gradient">
         <div className="container py-20 md:py-32">
           <div className="max-w-2xl space-y-6">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
               Kwaliteits<span className="text-primary">gereedschap</span> voor Professionals
             </h1>
-            <p className="text-lg md:text-xl text-secondary-foreground/80">
+            <p className="text-lg md:text-xl text-white/80">
               Nieuw en gebruikt gereedschap van topmerken. Van handgereedschap tot professionele machines - wij hebben het allemaal.
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
@@ -52,7 +52,7 @@ export default function Index() {
                 </Button>
               </Link>
               <Link to="/inkoop">
-                <Button size="lg" variant="outline" className="border-secondary-foreground/30 text-secondary-foreground hover:bg-secondary-foreground/10">
+                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
                   Wij Kopen In
                 </Button>
               </Link>
