@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Wrench, User } from 'lucide-react';
+import { ShoppingCart, Menu, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
+import logo from '@/assets/logo.png';
 
 export function Header() {
   const { totalItems } = useCart();
@@ -21,13 +22,8 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <Wrench className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">
-            JVW <span className="text-primary">Trading</span>
-          </span>
+        <Link to="/" className="flex items-center">
+          <img src={logo} alt="JVW Trading - Machines & gereedschap" className="h-12 w-auto" />
         </Link>
 
         {/* Desktop Navigation */}
