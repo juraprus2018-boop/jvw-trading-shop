@@ -243,7 +243,7 @@ export default function Index() {
 
       {/* CTA Section */}
       <section className="py-16 md:py-20 relative overflow-hidden">
-        <div className="absolute inset-0 milwaukee-gradient" />
+        <div className="absolute inset-0 brand-gradient" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
         <div className="container relative text-center">
