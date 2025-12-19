@@ -1,10 +1,11 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Truck, Shield, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Truck, Shield, RotateCcw, Package, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
 import { useProduct, useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ImageGallery } from '@/components/products/ImageGallery';
 import { toast } from 'sonner';
 
 export default function ProductDetailPage() {
@@ -29,8 +30,8 @@ export default function ProductDetailPage() {
     return (
       <Layout>
         <div className="container py-8">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="aspect-square bg-muted animate-pulse rounded-lg" />
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            <div className="aspect-square bg-muted animate-pulse rounded-xl" />
             <div className="space-y-4">
               <div className="h-8 bg-muted animate-pulse rounded w-3/4" />
               <div className="h-6 bg-muted animate-pulse rounded w-1/2" />
@@ -67,63 +68,44 @@ export default function ProductDetailPage() {
     gereviseerd: 'tool-badge-refurbished',
   }[product.condition] || 'tool-badge-used';
 
+  const discount = product.original_price && Number(product.original_price) > Number(product.price)
+    ? Math.round((1 - Number(product.price) / Number(product.original_price)) * 100)
+    : null;
+
   return (
     <Layout>
       <div className="container py-8">
         {/* Breadcrumb */}
         <Link
           to="/producten"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Terug naar producten
         </Link>
 
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          {/* Images */}
-          <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-              {product.images?.[0] ? (
-                <img
-                  src={product.images[0]}
-                  alt={product.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <span className="text-8xl text-muted-foreground">🔧</span>
-                </div>
-              )}
-            </div>
-            {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.images.slice(0, 4).map((img, i) => (
-                  <div
-                    key={i}
-                    className="aspect-square overflow-hidden rounded-md bg-muted cursor-pointer hover:opacity-80"
-                  >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
+          {/* Image Gallery */}
+          <ImageGallery 
+            images={product.images || []} 
+            productName={product.name} 
+          />
 
           {/* Product Info */}
           <div className="space-y-6">
             <div>
               {product.brand && (
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                <p className="text-sm font-medium text-primary uppercase tracking-wide mb-1">
                   {product.brand}
                 </p>
               )}
-              <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-              <div className="flex items-center gap-3">
+              <h1 className="text-3xl lg:text-4xl font-bold mb-3">{product.name}</h1>
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className={conditionClass}>{conditionLabel}</span>
                 {product.categories && (
                   <Link
                     to={`/producten?category=${product.categories.slug}`}
-                    className="text-sm text-muted-foreground hover:text-primary"
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     {product.categories.name}
                   </Link>
@@ -132,28 +114,33 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-primary">
+              <span className="text-4xl font-bold text-primary">
                 €{Number(product.price).toFixed(2)}
               </span>
-              {product.original_price && Number(product.original_price) > Number(product.price) && (
-                <span className="text-lg text-muted-foreground line-through">
-                  €{Number(product.original_price).toFixed(2)}
-                </span>
+              {discount && (
+                <>
+                  <span className="text-xl text-muted-foreground line-through">
+                    €{Number(product.original_price).toFixed(2)}
+                  </span>
+                  <span className="bg-destructive/10 text-destructive text-sm font-semibold px-2 py-1 rounded">
+                    -{discount}%
+                  </span>
+                </>
               )}
             </div>
 
             {product.description && (
-              <p className="text-muted-foreground">{product.description}</p>
+              <p className="text-muted-foreground text-lg leading-relaxed">{product.description}</p>
             )}
 
             <div className="flex items-center gap-2">
               <span
-                className={`inline-flex items-center gap-1 text-sm ${
+                className={`inline-flex items-center gap-2 text-sm font-medium ${
                   product.stock > 0 ? 'text-success' : 'text-destructive'
                 }`}
               >
                 <span
-                  className={`h-2 w-2 rounded-full ${
+                  className={`h-2.5 w-2.5 rounded-full ${
                     product.stock > 0 ? 'bg-success' : 'bg-destructive'
                   }`}
                 />
@@ -161,12 +148,12 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 pt-2">
               <Button
                 size="lg"
                 onClick={handleAddToCart}
                 disabled={product.stock <= 0}
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 h-14 text-lg"
               >
                 <ShoppingCart className="h-5 w-5" />
                 In Winkelwagen
@@ -174,18 +161,18 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Features */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t">
-              <div className="text-center">
-                <Truck className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">Snelle levering</p>
+            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <Truck className="h-6 w-6 mx-auto mb-2 text-primary" />
+                <p className="text-xs font-medium">Snelle levering</p>
               </div>
-              <div className="text-center">
-                <Shield className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">Kwaliteitsgarantie</p>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
+                <p className="text-xs font-medium">Kwaliteitsgarantie</p>
               </div>
-              <div className="text-center">
-                <RotateCcw className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">14 dagen retour</p>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <RotateCcw className="h-6 w-6 mx-auto mb-2 text-primary" />
+                <p className="text-xs font-medium">14 dagen retour</p>
               </div>
             </div>
           </div>
