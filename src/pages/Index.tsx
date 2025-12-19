@@ -85,18 +85,26 @@ export default function Index() {
                 </div>
               </div>
               
-              {/* CTA Buttons */}
+              {/* CTA Buttons - Direct links to new/used */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Link to="/producten">
+                <Link to="/producten?condition=nieuw">
                   <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
-                    Bekijk Producten
+                    Nieuwe Producten
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/inkoop">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
-                    Wij Kopen In
+                <Link to="/producten?condition=gebruikt">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2">
+                    Gebruikte Producten
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
+                </Link>
+              </div>
+              
+              {/* Secondary action */}
+              <div className="pt-2">
+                <Link to="/inkoop" className="text-white/70 hover:text-white text-sm underline underline-offset-4 transition-colors">
+                  Of verkoop uw gereedschap aan ons →
                 </Link>
               </div>
             </div>
@@ -235,7 +243,7 @@ export default function Index() {
 
       {/* CTA Section */}
       <section className="py-16 md:py-20 relative overflow-hidden">
-        <div className="absolute inset-0 orange-gradient" />
+        <div className="absolute inset-0 milwaukee-gradient" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
         <div className="container relative text-center">
