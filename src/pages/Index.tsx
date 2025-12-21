@@ -34,8 +34,6 @@ export default function Index() {
   ];
 
   const stats = [
-    { value: '500+', label: 'Producten' },
-    { value: '1000+', label: 'Tevreden klanten' },
     { value: '10+', label: 'Jaar ervaring' },
   ];
 
