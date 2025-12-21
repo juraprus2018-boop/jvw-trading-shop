@@ -2,3 +2,6 @@ project_id = "ptahntedlwpafngsiwhz"
 
 [functions.create-checkout]
 verify_jwt = false
+
+[functions.scrape-marktplaats]
+verify_jwt = false
