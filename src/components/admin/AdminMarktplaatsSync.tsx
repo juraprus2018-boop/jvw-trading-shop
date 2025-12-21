@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { RefreshCw, ExternalLink, Package, Download, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
 
 interface MarktplaatsListing {
   title: string;
@@ -15,6 +16,84 @@ interface MarktplaatsListing {
   description: string | null;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+// Keyword mappings for automatic categorization
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  zaagmachines: [
+    'zaag', 'zaagtafel', 'cirkelzaag', 'decoupeerzaag', 'verstekzaag',
+    'kettingzaag', 'afkortzaag', 'lintzaag', 'figuurzaag', 'reciprozaag',
+  ],
+  'elektrisch-gereedschap': [
+    'boormachine', 'boor', 'slijptol', 'schuurmachine', 'haakse slijper',
+    'accuschroef', 'klopboor', 'freesmachine', 'polijstmachine', 'heteluchtpistool',
+    'decoupeerzaag', 'elektrisch', 'accu', 'oplader', 'multitool',
+  ],
+  handgereedschap: [
+    'hamer', 'tang', 'schroevendraaier', 'moersleutel', 'sleutelset', 'steeksleutel',
+    'ringsleutel', 'waterpomptang', 'kniptang', 'combinatietang', 'nijptang',
+    'meetlint', 'waterpas', 'beitel', 'vijl', 'rasp', 'schaaf', 'handzaag',
+  ],
+  machines: [
+    'machine', 'compressor', 'generator', 'lasapparaat', 'lasmachine',
+    'draaibank', 'freesbank', 'pers', 'tafel', 'werkbank', 'statief',
+  ],
+  'bouw-verbouw': [
+    'bouw', 'verbouw', 'isolatie', 'kit', 'lijm', 'mortelmixer',
+    'tegelsnijder', 'tegels', 'afvoer', 'drainage', 'infiltratie', 'buizen',
+    'pvc', 'koppeling', 'afdichting', 'cement', 'beton',
+  ],
+  accessoires: [
+    'bit', 'boor', 'schijf', 'blad', 'zaagblad', 'schuurpapier',
+    'schuurschijf', 'doorslijpschijf', 'diamant', 'spijker', 'schroef',
+    'plug', 'set', 'koffer', 'opbergbox',
+  ],
+  'tuin-buiten': [
+    'tuin', 'grasmaaier', 'heggenschaar', 'bladblazer', 'snoeischaar',
+    'tuinslang', 'sproeier', 'hogedruk', 'terras', 'bestrating',
+  ],
+};
+
+/**
+ * Determines the best category for a listing based on title and description keywords.
+ */
+function detectCategory(
+  listing: MarktplaatsListing,
+  categories: Category[]
+): Category | null {
+  const textToSearch = `${listing.title} ${listing.description ?? ''}`.toLowerCase();
+
+  let bestMatch: { category: Category; score: number } | null = null;
+
+  for (const category of categories) {
+    const keywords = CATEGORY_KEYWORDS[category.slug];
+    if (!keywords) continue;
+
+    let score = 0;
+    for (const keyword of keywords) {
+      if (textToSearch.includes(keyword.toLowerCase())) {
+        score += 1;
+      }
+    }
+
+    if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { category, score };
+    }
+  }
+
+  // Fall back to "Overig" if no keywords match
+  if (!bestMatch) {
+    const fallback = categories.find((c) => c.slug === 'overig');
+    return fallback ?? null;
+  }
+
+  return bestMatch.category;
+}
+
 export function AdminMarktplaatsSync() {
   const [profileUrl, setProfileUrl] = useState('https://www.marktplaats.nl/u/job/26215563/');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +101,20 @@ export function AdminMarktplaatsSync() {
   const [importingIndex, setImportingIndex] = useState<number | null>(null);
   const [listings, setListings] = useState<MarktplaatsListing[]>([]);
   const [importedUrls, setImportedUrls] = useState<Set<string>>(new Set());
+  const [categories, setCategories] = useState<Category[]>([]);
   const queryClient = useQueryClient();
+
+  // Load categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name, slug')
+        .order('name');
+      if (data) setCategories(data);
+    };
+    fetchCategories();
+  }, []);
 
   const handleSync = async () => {
     if (!profileUrl) {
@@ -79,6 +171,9 @@ export function AdminMarktplaatsSync() {
       const priceNum =
         parseFloat(listing.price.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
 
+      // Detect category
+      const detectedCategory = detectCategory(listing, categories);
+
       const { error } = await supabase.from('products').insert({
         name: listing.title,
         slug,
@@ -90,6 +185,7 @@ export function AdminMarktplaatsSync() {
         images: listing.image ? [listing.image] : [],
         active: true,
         featured: false,
+        category_id: detectedCategory?.id ?? null,
       });
 
       if (error) {
@@ -249,9 +345,19 @@ export function AdminMarktplaatsSync() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{listing.title}</p>
-                      {listing.price && (
-                        <p className="text-sm text-accent font-semibold">{listing.price}</p>
-                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        {listing.price && (
+                          <span className="text-sm text-accent font-semibold">{listing.price}</span>
+                        )}
+                        {(() => {
+                          const cat = detectCategory(listing, categories);
+                          return cat ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {cat.name}
+                            </Badge>
+                          ) : null;
+                        })()}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
