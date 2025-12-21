@@ -62,24 +62,30 @@ export function AdminMarktplaatsSync() {
     }
   };
 
-  const importListing = async (listing: MarktplaatsListing): Promise<boolean> => {
+  const importListing = async (
+    listing: MarktplaatsListing
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       // Create a slug from the title
-      const slug = listing.title
+      const slugBase = listing.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
-        .substring(0, 50) + '-' + Date.now();
+        .substring(0, 50);
+
+      const slug = `${slugBase || 'product'}-${Date.now()}`;
 
       // Parse price to number
-      const priceNum = parseFloat(listing.price.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+      const priceNum =
+        parseFloat(listing.price.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
 
       const { error } = await supabase.from('products').insert({
         name: listing.title,
         slug,
         description: listing.description || `Geïmporteerd van Marktplaats: ${listing.url}`,
         price: priceNum,
-        condition: 'Gebruikt',
+        // Must match DB constraint: nieuw | gebruikt | gereviseerd
+        condition: 'gebruikt',
         stock: 1,
         images: listing.image ? [listing.image] : [],
         active: true,
@@ -91,10 +97,11 @@ export function AdminMarktplaatsSync() {
         throw error;
       }
 
-      return true;
+      return { success: true };
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Onbekende fout';
       console.error('Import failed:', error);
-      return false;
+      return { success: false, error: message };
     }
   };
 
@@ -105,23 +112,25 @@ export function AdminMarktplaatsSync() {
     }
 
     setImportingIndex(index);
-    
-    const success = await importListing(listing);
-    
-    if (success) {
-      setImportedUrls(prev => new Set(prev).add(listing.url));
+
+    const result = await importListing(listing);
+
+    if (result.success) {
+      setImportedUrls((prev) => new Set(prev).add(listing.url));
       toast.success(`"${listing.title}" geïmporteerd!`);
       queryClient.invalidateQueries({ queryKey: ['products'] });
     } else {
-      toast.error(`Importeren van "${listing.title}" mislukt`);
+      toast.error(
+        `Importeren van "${listing.title}" mislukt${result.error ? `: ${result.error}` : ''}`
+      );
     }
-    
+
     setImportingIndex(null);
   };
 
   const handleImportAll = async () => {
-    const toImport = listings.filter(l => !importedUrls.has(l.url));
-    
+    const toImport = listings.filter((l) => !importedUrls.has(l.url));
+
     if (toImport.length === 0) {
       toast.info('Alle producten zijn al geïmporteerd');
       return;
@@ -129,24 +138,27 @@ export function AdminMarktplaatsSync() {
 
     setIsImporting(true);
     let imported = 0;
+    let firstError: string | undefined;
 
     for (const listing of toImport) {
-      const success = await importListing(listing);
-      if (success) {
+      const result = await importListing(listing);
+      if (result.success) {
         imported++;
-        setImportedUrls(prev => new Set(prev).add(listing.url));
+        setImportedUrls((prev) => new Set(prev).add(listing.url));
+      } else {
+        firstError ||= result.error;
       }
       // Small delay between imports
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     setIsImporting(false);
     queryClient.invalidateQueries({ queryKey: ['products'] });
-    
+
     if (imported > 0) {
       toast.success(`${imported} producten geïmporteerd!`);
     } else {
-      toast.error('Geen producten konden worden geïmporteerd');
+      toast.error(`Geen producten konden worden geïmporteerd${firstError ? `: ${firstError}` : ''}`);
     }
   };
 
