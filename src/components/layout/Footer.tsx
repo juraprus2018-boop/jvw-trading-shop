@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Wrench, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 export function Footer() {
   return (
@@ -9,12 +10,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Wrench className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold">
-                JVW <span className="text-primary">Trading</span>
-              </span>
+              <img src={logo} alt="JVW Trading" className="h-10 w-auto" />
             </div>
             <p className="text-sm text-secondary-foreground/70">
               Uw betrouwbare partner voor nieuw en gebruikt gereedschap. Kwaliteit voor elke klus.
@@ -65,11 +61,11 @@ export function Footer() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-secondary-foreground/70">
                 <Mail className="h-4 w-4" />
-                <span>info@jvwtrading.nl</span>
+                <span>info@jvw-trading.nl</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-secondary-foreground/70">
                 <Phone className="h-4 w-4" />
-                <span>+31 6 12345678</span>
+                <span>+31 6 30203509</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-secondary-foreground/70">
                 <MapPin className="h-4 w-4" />
