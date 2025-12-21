@@ -6,6 +6,7 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminProducts } from '@/components/admin/AdminProducts';
 import { AdminOrders } from '@/components/admin/AdminOrders';
 import { AdminPurchaseRequests } from '@/components/admin/AdminPurchaseRequests';
+import { AdminMarktplaatsSync } from '@/components/admin/AdminMarktplaatsSync';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -37,6 +38,7 @@ export default function AdminPage() {
         <Route path="producten" element={<AdminProducts />} />
         <Route path="bestellingen" element={<AdminOrders />} />
         <Route path="inkoop" element={<AdminPurchaseRequests />} />
+        <Route path="marktplaats" element={<AdminMarktplaatsSync />} />
       </Routes>
     </AdminLayout>
   );

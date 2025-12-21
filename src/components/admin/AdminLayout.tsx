@@ -7,7 +7,8 @@ import {
   LayoutDashboard, 
   LogOut,
   Wrench,
-  ChevronLeft
+  ChevronLeft,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/admin/producten', label: 'Producten', icon: Package },
   { href: '/admin/bestellingen', label: 'Bestellingen', icon: ShoppingCart },
   { href: '/admin/inkoop', label: 'Inkoop Aanvragen', icon: Inbox },
+  { href: '/admin/marktplaats', label: 'Marktplaats Sync', icon: RefreshCw },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
