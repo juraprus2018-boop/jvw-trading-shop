@@ -98,6 +98,13 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start px-4">
+                  Admin
+                </Button>
+              </Link>
+            )}
             {user ? (
               <Button variant="ghost" size="sm" onClick={signOut} className="justify-start px-4">
                 Uitloggen
