@@ -51,6 +51,11 @@ export function Header() {
           
           {user ? (
             <>
+              <Link to="/bestellingen">
+                <Button variant="ghost" size="sm" className="hidden sm:flex">
+                  Bestellingen
+                </Button>
+              </Link>
               <Link to="/profiel">
                 <Button variant="ghost" size="icon" className="hidden sm:flex">
                   <User className="h-5 w-5" />
@@ -114,6 +119,11 @@ export function Header() {
             )}
             {user ? (
               <>
+                <Link to="/bestellingen" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" size="sm" className="w-full justify-start px-4">
+                    Mijn Bestellingen
+                  </Button>
+                </Link>
                 <Link to="/profiel" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" size="sm" className="w-full justify-start px-4">
                     Mijn Profiel

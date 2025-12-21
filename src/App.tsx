@@ -15,6 +15,7 @@ import InkoopPage from "./pages/InkoopPage";
 import AuthPage from "./pages/AuthPage";
 import AdminPage from "./pages/AdminPage";
 import ProfilePage from "./pages/ProfilePage";
+import OrdersPage from "./pages/OrdersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/inkoop" element={<InkoopPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/profiel" element={<ProfilePage />} />
+              <Route path="/bestellingen" element={<OrdersPage />} />
               <Route path="/admin/*" element={<AdminPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
