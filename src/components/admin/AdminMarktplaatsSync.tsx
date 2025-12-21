@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { RefreshCw, ExternalLink, Package } from 'lucide-react';
+import { RefreshCw, ExternalLink, Package, Download, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface MarktplaatsListing {
   title: string;
@@ -17,8 +18,11 @@ interface MarktplaatsListing {
 export function AdminMarktplaatsSync() {
   const [profileUrl, setProfileUrl] = useState('https://www.marktplaats.nl/u/job/26215563/');
   const [isLoading, setIsLoading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importingIndex, setImportingIndex] = useState<number | null>(null);
   const [listings, setListings] = useState<MarktplaatsListing[]>([]);
-  const [rawHtmlLength, setRawHtmlLength] = useState<number | null>(null);
+  const [importedUrls, setImportedUrls] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
 
   const handleSync = async () => {
     if (!profileUrl) {
@@ -28,6 +32,7 @@ export function AdminMarktplaatsSync() {
 
     setIsLoading(true);
     setListings([]);
+    setImportedUrls(new Set());
 
     try {
       const { data, error } = await supabase.functions.invoke('scrape-marktplaats', {
@@ -43,12 +48,11 @@ export function AdminMarktplaatsSync() {
       }
 
       setListings(data.listings || []);
-      setRawHtmlLength(data.rawHtmlLength || null);
       
       if (data.listings?.length > 0) {
         toast.success(`${data.listings.length} listings gevonden!`);
       } else {
-        toast.info('Geen listings gevonden. De pagina is mogelijk geblokkeerd of heeft een andere structuur.');
+        toast.info('Geen listings gevonden');
       }
     } catch (error) {
       console.error('Sync error:', error);
@@ -58,9 +62,92 @@ export function AdminMarktplaatsSync() {
     }
   };
 
-  const handleImportListing = async (listing: MarktplaatsListing) => {
-    toast.info(`Import van "${listing.title}" komt binnenkort...`);
-    // TODO: Implement actual import to products table
+  const importListing = async (listing: MarktplaatsListing): Promise<boolean> => {
+    try {
+      // Create a slug from the title
+      const slug = listing.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 50) + '-' + Date.now();
+
+      // Parse price to number
+      const priceNum = parseFloat(listing.price.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+
+      const { error } = await supabase.from('products').insert({
+        name: listing.title,
+        slug,
+        description: listing.description || `Geïmporteerd van Marktplaats: ${listing.url}`,
+        price: priceNum,
+        condition: 'Gebruikt',
+        stock: 1,
+        images: listing.image ? [listing.image] : [],
+        active: true,
+        featured: false,
+      });
+
+      if (error) {
+        console.error('Error importing:', error);
+        throw error;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Import failed:', error);
+      return false;
+    }
+  };
+
+  const handleImportListing = async (listing: MarktplaatsListing, index: number) => {
+    if (importedUrls.has(listing.url)) {
+      toast.info('Dit product is al geïmporteerd');
+      return;
+    }
+
+    setImportingIndex(index);
+    
+    const success = await importListing(listing);
+    
+    if (success) {
+      setImportedUrls(prev => new Set(prev).add(listing.url));
+      toast.success(`"${listing.title}" geïmporteerd!`);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    } else {
+      toast.error(`Importeren van "${listing.title}" mislukt`);
+    }
+    
+    setImportingIndex(null);
+  };
+
+  const handleImportAll = async () => {
+    const toImport = listings.filter(l => !importedUrls.has(l.url));
+    
+    if (toImport.length === 0) {
+      toast.info('Alle producten zijn al geïmporteerd');
+      return;
+    }
+
+    setIsImporting(true);
+    let imported = 0;
+
+    for (const listing of toImport) {
+      const success = await importListing(listing);
+      if (success) {
+        imported++;
+        setImportedUrls(prev => new Set(prev).add(listing.url));
+      }
+      // Small delay between imports
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    setIsImporting(false);
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    
+    if (imported > 0) {
+      toast.success(`${imported} producten geïmporteerd!`);
+    } else {
+      toast.error('Geen producten konden worden geïmporteerd');
+    }
   };
 
   return (
@@ -98,28 +185,47 @@ export function AdminMarktplaatsSync() {
             </Button>
           </div>
 
-          {rawHtmlLength !== null && (
-            <p className="text-sm text-muted-foreground">
-              Pagina opgehaald: {rawHtmlLength.toLocaleString()} karakters
-            </p>
-          )}
         </CardContent>
       </Card>
 
       {listings.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Gevonden Listings ({listings.length})</CardTitle>
-            <CardDescription>
-              Selecteer welke listings je wilt importeren
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Gevonden Listings ({listings.length})</CardTitle>
+                <CardDescription>
+                  {importedUrls.size > 0 
+                    ? `${importedUrls.size} van ${listings.length} geïmporteerd`
+                    : 'Selecteer welke listings je wilt importeren'}
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={handleImportAll} 
+                disabled={isImporting || importedUrls.size === listings.length}
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importeren...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Alles Importeren
+                  </>
+                )}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {listings.map((listing, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className={`flex items-center justify-between p-3 border rounded-lg ${
+                    importedUrls.has(listing.url) ? 'bg-muted/50 opacity-60' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     {listing.image && (
@@ -144,8 +250,18 @@ export function AdminMarktplaatsSync() {
                         </a>
                       </Button>
                     )}
-                    <Button size="sm" onClick={() => handleImportListing(listing)}>
-                      Importeren
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleImportListing(listing, index)}
+                      disabled={importedUrls.has(listing.url) || importingIndex === index || isImporting}
+                    >
+                      {importingIndex === index ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : importedUrls.has(listing.url) ? (
+                        'Geïmporteerd'
+                      ) : (
+                        'Importeren'
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -155,17 +271,12 @@ export function AdminMarktplaatsSync() {
         </Card>
       )}
 
-      {listings.length === 0 && rawHtmlLength !== null && (
+      {listings.length === 0 && !isLoading && (
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-muted-foreground">
-              Geen listings gevonden. Dit kan komen doordat:
+              Klik op "Sync Nu" om listings op te halen van Marktplaats
             </p>
-            <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-              <li>• Marktplaats de request heeft geblokkeerd</li>
-              <li>• De profielpagina een andere structuur heeft</li>
-              <li>• Er geen actieve listings zijn op dit profiel</li>
-            </ul>
           </CardContent>
         </Card>
       )}
