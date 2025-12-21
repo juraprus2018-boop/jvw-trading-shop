@@ -50,9 +50,16 @@ export function Header() {
           )}
           
           {user ? (
-            <Button variant="ghost" size="sm" onClick={signOut} className="hidden sm:flex">
-              Uitloggen
-            </Button>
+            <>
+              <Link to="/profiel">
+                <Button variant="ghost" size="icon" className="hidden sm:flex">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={signOut} className="hidden sm:flex">
+                Uitloggen
+              </Button>
+            </>
           ) : (
             <Link to="/auth">
               <Button variant="ghost" size="icon" className="hidden sm:flex">
@@ -106,9 +113,16 @@ export function Header() {
               </Link>
             )}
             {user ? (
-              <Button variant="ghost" size="sm" onClick={signOut} className="justify-start px-4">
-                Uitloggen
-              </Button>
+              <>
+                <Link to="/profiel" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" size="sm" className="w-full justify-start px-4">
+                    Mijn Profiel
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={signOut} className="justify-start px-4">
+                  Uitloggen
+                </Button>
+              </>
             ) : (
               <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="ghost" size="sm" className="w-full justify-start px-4">

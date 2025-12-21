@@ -14,6 +14,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import InkoopPage from "./pages/InkoopPage";
 import AuthPage from "./pages/AuthPage";
 import AdminPage from "./pages/AdminPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/inkoop" element={<InkoopPage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/profiel" element={<ProfilePage />} />
               <Route path="/admin/*" element={<AdminPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
