@@ -201,12 +201,12 @@ serve(async (req) => {
     const html = await response.text();
     console.log('Received profile HTML length:', html.length);
 
-    // Find all listing URLs from the profile page
+    // Find all listing URLs from the profile page using multiple patterns
     const listingUrls: string[] = [];
-    
-    // Pattern 1: /v/ style listing URLs (e.g. /v/doe-het-zelf-en-verbouw/buizen-en-afvoer/m2338694383-infiltratieput-krat)
-    const urlPattern1 = /href="(\/v\/[^"]+)"/gi;
     let urlMatch;
+    
+    // Pattern 1: relative /v/ URLs
+    const urlPattern1 = /href="(\/v\/[^"]+)"/gi;
     while ((urlMatch = urlPattern1.exec(html)) !== null) {
       const path = urlMatch[1].split('?')[0].split('#')[0];
       const fullUrl = `https://www.marktplaats.nl${path}`;
@@ -215,13 +215,37 @@ serve(async (req) => {
       }
     }
     
-    // Pattern 2: Full marktplaats.nl/v/ URLs
+    // Pattern 2: full marktplaats.nl/v/ URLs
     const urlPattern2 = /href="(https?:\/\/(?:www\.)?marktplaats\.nl\/v\/[^"]+)"/gi;
     while ((urlMatch = urlPattern2.exec(html)) !== null) {
       const fullUrl = urlMatch[1].split('?')[0].split('#')[0];
       if (!listingUrls.includes(fullUrl)) {
         listingUrls.push(fullUrl);
       }
+    }
+    
+    // Pattern 3: listing URLs in data attributes or JSON (e.g. data-url, itemUrl, etc.)
+    const urlPattern3 = /(?:url|href|link)['":\s]*["']?(https?:\/\/(?:www\.)?marktplaats\.nl\/v\/[^"'\s,}]+)/gi;
+    while ((urlMatch = urlPattern3.exec(html)) !== null) {
+      const fullUrl = urlMatch[1].split('?')[0].split('#')[0];
+      if (!listingUrls.includes(fullUrl)) {
+        listingUrls.push(fullUrl);
+      }
+    }
+    
+    // Pattern 4: /v/ paths without href (in JSON data, onclick handlers, etc.)
+    const urlPattern4 = /["'](\/v\/[a-z0-9-]+\/[a-z0-9-]+\/m\d+-[^"']+)["']/gi;
+    while ((urlMatch = urlPattern4.exec(html)) !== null) {
+      const path = urlMatch[1].split('?')[0].split('#')[0];
+      const fullUrl = `https://www.marktplaats.nl${path}`;
+      if (!listingUrls.includes(fullUrl)) {
+        listingUrls.push(fullUrl);
+      }
+    }
+
+    console.log(`Found ${listingUrls.length} listing URLs`);
+    for (const u of listingUrls) {
+      console.log('  -', u);
     }
 
     console.log(`Found ${listingUrls.length} listing URLs`);
