@@ -203,10 +203,22 @@ serve(async (req) => {
 
     // Find all listing URLs from the profile page
     const listingUrls: string[] = [];
-    const urlPattern = /href="(\/v\/[^"]+m\d+[^"]*)"/gi;
+    
+    // Pattern 1: /v/ style listing URLs (e.g. /v/doe-het-zelf-en-verbouw/buizen-en-afvoer/m2338694383-infiltratieput-krat)
+    const urlPattern1 = /href="(\/v\/[^"]+)"/gi;
     let urlMatch;
-    while ((urlMatch = urlPattern.exec(html)) !== null) {
-      const fullUrl = `https://www.marktplaats.nl${urlMatch[1].split('?')[0]}`;
+    while ((urlMatch = urlPattern1.exec(html)) !== null) {
+      const path = urlMatch[1].split('?')[0].split('#')[0];
+      const fullUrl = `https://www.marktplaats.nl${path}`;
+      if (!listingUrls.includes(fullUrl)) {
+        listingUrls.push(fullUrl);
+      }
+    }
+    
+    // Pattern 2: Full marktplaats.nl/v/ URLs
+    const urlPattern2 = /href="(https?:\/\/(?:www\.)?marktplaats\.nl\/v\/[^"]+)"/gi;
+    while ((urlMatch = urlPattern2.exec(html)) !== null) {
+      const fullUrl = urlMatch[1].split('?')[0].split('#')[0];
       if (!listingUrls.includes(fullUrl)) {
         listingUrls.push(fullUrl);
       }
