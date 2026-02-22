@@ -149,6 +149,7 @@ export type Database = {
           original_price: number | null
           price: number
           slug: string
+          source_url: string | null
           stock: number
           stripe_price_id: string | null
           updated_at: string
@@ -167,6 +168,7 @@ export type Database = {
           original_price?: number | null
           price: number
           slug: string
+          source_url?: string | null
           stock?: number
           stripe_price_id?: string | null
           updated_at?: string
@@ -185,6 +187,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           slug?: string
+          source_url?: string | null
           stock?: number
           stripe_price_id?: string | null
           updated_at?: string
