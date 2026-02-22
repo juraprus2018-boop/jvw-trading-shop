@@ -179,14 +179,14 @@ export function AdminMarktplaatsSync() {
         slug,
         description: listing.description || `Geïmporteerd van Marktplaats: ${listing.url}`,
         price: priceNum,
-        // Must match DB constraint: nieuw | gebruikt | gereviseerd
         condition: 'gebruikt',
         stock: 1,
         images: listing.image ? [listing.image] : [],
         active: true,
         featured: false,
         category_id: detectedCategory?.id ?? null,
-      });
+        source_url: listing.url,
+      } as any);
 
       if (error) {
         console.error('Error importing:', error);
